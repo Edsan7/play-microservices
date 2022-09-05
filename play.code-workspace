@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"path": "packages"
+		},
+		{
+			"path": "Play.Catalog"
+		},
+		{
+			"path": "Play.Common"
+		},
+		{
+			"path": "Play.Infra"
+		},
+		{
+			"path": "Play.Inventory"
+		}
+	]
+}

@@ -1,3 +1,4 @@
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -5,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Play.Catalog.Service.Entities;
+using Play.Catalog.Service.Settings;
 using Play.Common.Service.Repositories;
 using Play.Common.Service.Settings;
 
@@ -26,9 +28,21 @@ namespace Play.Catalog.Service
         {
             services.AddMongo().AddMongoRepository<Item>("items");
 
+            services.AddMassTransit((configuration) =>
+            {
+                configuration.UsingRabbitMq((context, configure) =>
+                {
+                    var rabbitSettings = Configuration.GetSection(nameof(RabbitMQSettings)).Get<RabbitMQSettings>();
+                    configure.Host(rabbitSettings.Host);
+                    configure.ConfigureEndpoints(context, new KebabCaseEndpointNameFormatter(serviceSettigs.ServiceName, false));
+                });
+            });
+
+
             services.AddControllers(
                 options => options.SuppressAsyncSuffixInActionNames = false
             );
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Play.Catalog.Service", Version = "v1" });
