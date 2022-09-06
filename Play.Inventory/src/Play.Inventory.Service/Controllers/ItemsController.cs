@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Play.Common.Service.Repositories;
-using Play.Inventory.Service.Clients;
 using Play.Inventory.Service.Dtos;
 using Play.Inventory.Service.Entities;
 
@@ -17,12 +16,14 @@ namespace Play.Inventory.Service.Controllers
 
         private readonly IRepository<InventoryItem> _itemsRepository;
 
-        private readonly CatalogClient _catalogClient;
+        private readonly IRepository<CatalogItem> _catalogItemsRepository;
 
-        public ItemsController(IRepository<InventoryItem> itemsRepository, CatalogClient catalogClient)
+
+
+        public ItemsController(IRepository<InventoryItem> itemsRepository, IRepository<CatalogItem> catalogItemsRepository)
         {
             this._itemsRepository = itemsRepository;
-            _catalogClient = catalogClient;
+            _catalogItemsRepository = catalogItemsRepository;
         }
 
 
@@ -32,10 +33,12 @@ namespace Play.Inventory.Service.Controllers
             if (userId == Guid.Empty)
                 return BadRequest();
 
-            var catalogItems = await _catalogClient.GetCatalogItemsAsync();
-            var inventoryItems = await _itemsRepository.GetAllAsync(x => x.UserId == userId);
 
-            var itemsDtos = inventoryItems.Select(x => 
+            var inventoryItems = await _itemsRepository.GetAllAsync(x => x.UserId == userId);
+            var itemIds = inventoryItems.Select(i => i.CatalogItemId);
+            var catalogItems = await _catalogItemsRepository.GetAllAsync(x => itemIds.Contains(x.Id));
+
+            var itemsDtos = inventoryItems.Select(x =>
             {
                 var catalogItem = catalogItems.FirstOrDefault(y => y.Id == x.CatalogItemId);
 

@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Play.Catalog.Service.Entities;
-using Play.Catalog.Service.Settings;
+using Play.Common.MassTransit;
 using Play.Common.Service.Repositories;
 using Play.Common.Service.Settings;
 
@@ -26,18 +26,9 @@ namespace Play.Catalog.Service
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMongo().AddMongoRepository<Item>("items");
-
-            services.AddMassTransit((configuration) =>
-            {
-                configuration.UsingRabbitMq((context, configure) =>
-                {
-                    var rabbitSettings = Configuration.GetSection(nameof(RabbitMQSettings)).Get<RabbitMQSettings>();
-                    configure.Host(rabbitSettings.Host);
-                    configure.ConfigureEndpoints(context, new KebabCaseEndpointNameFormatter(serviceSettigs.ServiceName, false));
-                });
-            });
-
+            services.AddMongo()
+            .AddMongoRepository<Item>("items")
+            .AddMassTransitWithRabbitMq();
 
             services.AddControllers(
                 options => options.SuppressAsyncSuffixInActionNames = false
